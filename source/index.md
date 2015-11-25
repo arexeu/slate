@@ -1,14 +1,13 @@
 ---
-title: API Reference
+title: AREX Issuer API Reference
 
 language_tabs:
   - shell
-  - ruby
-  - python
+  - javascript
 
 toc_footers:
-  - <a href='#'>Sign Up for a Developer Key</a>
-  - <a href='http://github.com/tripit/slate'>Documentation Powered by Slate</a>
+  - <a href='#'>Get a Developer Key</a>
+  - <a href='http://arex.io'>Back to our main site</a>
 
 includes:
   - errors
@@ -16,153 +15,227 @@ includes:
 search: true
 ---
 
-# Introduction
+# AREX Issuer API
 
-Welcome to the Kittn API! You can use our API to access Kittn API endpoints, which can get information on various cats, kittens, and breeds in our database.
+<aside class="notice">
+<strong>All API requests must be made over HTTP over TLS (HTTPS)</strong>. Requests made over plain HTTP will fail.
+</aside>
 
-We have language bindings in Shell, Ruby, and Python! You can view code examples in the dark area to the right, and you can switch the programming language of the examples with the tabs in the top right.
+The AREX API for [Issuers](https://youtu.be/k2Nn4df1ZhM) is organized around [REST](http://en.wikipedia.org/wiki/Representational_State_Transfer). Our API is designed to have predictable, resource-oriented URLs and to use HTTP response codes and [JSON](http://www.json.org/)  payloads to indicate API errors. JSON will be returned in all responses from the API, including errors (*although client libraries will normally translate and map these automatically to language-specific objects or constructs*).
 
-This example API documentation page was created with [Slate](http://github.com/tripit/slate). Feel free to edit it and use it as a base for your own API's documentation.
+To make the AREX API as explorable and testable as possible, our sandbox API is available for development purposes. The sandbox keys need to be separately obtained and activated in your main account. Data created and sent to the sandbox will never hit the live market and will never cost any money. We have however a set of algorithmic investors in the sandbox, which provide you with a simulated market in order to test your processes end-to-end. The sandbox mirrors the live market in all aspects, except that the sandbox databases will be purged every midnight.
+
+The sandbox API endpoint at: `https://issuer.arex.io/sandbox`
+
+The live API endpoint at: `https://issuer.arex.io/api`
+
+# Getting started
+
+<aside class="warning">
+<strong>Before you start:</strong> Make sure that you're authorized to enroll the company that you represent. We make the assumption that you've cleared your lines internally before starting to apply for any accounts, be it a sandbox-account or a live one.
+</aside>
+
+In order to access AREX you need to first register for an `Account`. An AREX  account is always denominated in a single currency, such as EUR, GBP, SEK, USD. Companies that trade in multiple currencies can therefore setup several accounts. __The default account is denominated in EUR__.
+
+The AREX account belongs to a `Company`, which in turn has one or several `Users`. Users can exist without having access to any companies, but a company always needs to have at least one user.
+
+Orphan users (_that are not part of any company_) cannot access any AREX accounts. They can nevertheless login and have normal access to user-specific actions, such as registration of new companies and their user settings (More about this later).
+
+## Registration requirements
+
+To register for an AREX account, you need the following information:
+
+Input | Description
+---------- | -------
+**VAT number** | A valid value added tax identification number or VAT number for the company that you wish to apply an AREX account for.
+**Email address** | The user's email address who will be responsible* for the account registration process
+**Phone number** | The user's phone number (mobile or landline) that will responsible* for the account registration process
+
+_* the user responsible for the account opening is the contact person AREX will liaise with, who does not need to be the authorized signatory of the company._
+
+## Registration process
+
+The registration process consists of following parts:
+
+* Validation of the user
+* Validation of the company
+
+### User validation
+
+AREX will automatically send a confirmation email to the provided email address after a successful registration request. The user must confirm the email address by clicking the confirmation link in the email. After the user confirms their email address, we will automatically initiate a phone number verification, where the user either receives an SMS or a call with a challenge token, that the user must provide back to us. If the challenge provided is correct, the user can create a password for their account. After this step, the user can now log in to the AREX service and initiate the next step; validation of the company.
+
+### Company validation
+
+In order to adhere to our [KYC (Know Your Customer)](https://en.wikipedia.org/wiki/Know_your_customer) requirements, AREX will send an unmarked letter to your company's registered office's address, that is addressed to the company's authorized signatory. The user cannot intervene with this process and the registered office's address is automatically requested by AREX. The letter includes a unique activation code, that the user must obtain and input in order to activate the company's account.
 
 # Authentication
 
-> To authorize, use this code:
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-```
-
 ```shell
-# With shell, you can just pass the correct header with each request
-curl "api_endpoint_here"
-  -H "Authorization: meowmeowmeow"
+# With curl you just simply include the `apiKey` in all your requests
+curl "https://sandbox.api.arex.io"
+  -d "apiKey=ch72gsb320000udocl363eofy"
 ```
 
-> Make sure to replace `meowmeowmeow` with your API key.
+The API requests are authenticated using [JSON Web Tokens (JWTs)](http://jwt.io/). JWTs are an open, industry standard [RFC 7519](https://tools.ietf.org/html/rfc7519) method for representing claims securely between two parties. This information can be verified and trusted because it is digitally signed. Luckily, you don't need to know anything about JWTs in order to use AREX, as the JWTs are automatically issued and verified by us. You must however understand:
 
-Kittn uses API keys to allow access to the API. You can register a new Kittn API key at our [developer portal](http://example.com/developers).
+* How to obtain a JWT from the API
+* What `Contexts` are and how you use them
+* How to send the JWT with your API requests
 
-Kittn expects for the API key to be included in all API requests to the server in a header that looks like the following:
+The JWTs are not only useful for **authentication** (ascertaining of who the user is) but also **authorization** (ascertaining what the user is allowed to do). AREX uses JWTs for both authentication and authorization of the user's API requests.
 
-`Authorization: meowmeowmeow`
+## JWT Basics
 
-<aside class="notice">
-You must replace <code>meowmeowmeow</code> with your personal API key.
-</aside>
+JWTs are compact URL-safe tokens, that look like this a compressed format:
 
-# Kittens
+`eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJjdHgiOnsidXNlciI6MzB9LCJpYXQiOjE0NDg0NDY2ODgsImV4cCI6MTQ0ODQ3NTQ4OCwiaXNzIjoiYXJleDppc3N1ZSIsInN1YiI6Imlzc3VlIn0.5HpnejRAZ68tc4ChfIwlrhMDd60-2UVJNTOM6X8xleo`
 
-## Get All Kittens
+The string looks like gibberish, but it actually consists of three [Base64](https://en.wikipedia.org/wiki/Base64)-encoded segments, each separated by a dot.
 
-```ruby
-require 'kittn'
+`{header}.{body}.{signature}`
 
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get
-```
+Next we'll demystify these segments one-by-one.
 
-```python
-import kittn
+### Header
 
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get()
-```
-
-```shell
-curl "http://example.com/api/kittens"
-  -H "Authorization: meowmeowmeow"
-```
-
-> The above command returns JSON structured like this:
+The header part declares that the encoded object is a JSON Web Token and which algorithm was used to create the signature. If we decode the header  we can inspect the contents.
 
 ```json
-[
-  {
-    "id": 1,
-    "name": "Fluffums",
-    "breed": "calico",
-    "fluffiness": 6,
-    "cuteness": 7
-  },
-  {
-    "id": 2,
-    "name": "Isis",
-    "breed": "unknown",
-    "fluffiness": 5,
-    "cuteness": 10
-  }
-]
+{
+  "typ": "JWT",
+  "alg": "HS256"
+}
 ```
 
-This endpoint retrieves all kittens.
+# Accounts
 
-### HTTP Request
+# Companies
 
-`GET http://example.com/kittens`
+# Users
 
-### Query Parameters
+# Invoices
 
-Parameter | Default | Description
+`Invoice` is a synonym for the trade receivables (invoices) that are used to create marketable `Contracts`. Collateral may be uploaded to AREX by sending it through the API, by user uploading it through the browser or by an AREX provided service integration.
+
+Newly uploaded `Collateral` are by default automatically turned into a `Contract` once the collateralization process has been completed. The process itself is asynchronous and will yield a new contract or an error when complete.  
+
+## Create new Invoices
+
+```shell
+curl https://sandbox.api.arex.io/collateral \
+  -d "apiKey=ch72gsb320000udocl363eofy" \
+  -F invoice_id=102936A \
+  -F file="@/path/to/invoice_102936A.pdf"
+```
+
+> The above request returns a JSON response:
+
+```json
+{
+  "id": "col_15A3Gj2eZvKYlo2C0NxXGm4s",
+  "created": 1433502667927,
+  "size": 33278,
+  "invoice": "102936A",
+  "object": "file_upload",
+  "type": "pdf"
+}
+```
+
+This endpoint allows for a new collateral to be uploaded through the API.
+
+To upload a file to AREX, you'll need to send a request of type `multipart/form-data`. The request should contain the file you would like to upload, as well as the parameters for creating the collateral.
+
+All of AREX's officially supported client libraries should have support for sending `multipart/form-data`.
+
+### API Request
+
+`POST https://sandbox.api.arex.io/collateral`
+
+### Arguments
+
+Parameter | Type | Description
 --------- | ------- | -----------
-include_cats | false | If set to true, the result will also include cats.
-available | true | If set to false, the result will include kittens that have already been adopted.
+**invoice_id** | string | The Issuer's running sequential identitfication number for this invoice
+**file** | file | A file to upload. The file should follow the specifications of [RFC 2388](https://www.ietf.org/rfc/rfc2388.txt) (which defines file transfers for the `multipart/form-data` protocol).
 
 <aside class="success">
 Remember — a happy kitten is an authenticated kitten!
 </aside>
 
-## Get a Specific Kitten
-
-```ruby
-require 'kittn'
-
-api = Kittn::APIClient.authorize!('meowmeowmeow')
-api.kittens.get(2)
-```
-
-```python
-import kittn
-
-api = kittn.authorize('meowmeowmeow')
-api.kittens.get(2)
-```
+## List all Invoices
 
 ```shell
-curl "http://example.com/api/kittens/3"
-  -H "Authorization: meowmeowmeow"
+curl https://sandbox.api.arex.io/collateral \
+  -d "apiKey=ch72gsb320000udocl363eofy"
 ```
 
-> The above command returns JSON structured like this:
+> The above request returns a JSON response:
 
 ```json
-{
-  "id": 2,
-  "name": "Isis",
-  "breed": "unknown",
-  "fluffiness": 5,
-  "cuteness": 10
-}
+[
+  {
+    "id": "col_15A3Gj2eZvKYlo2C0NxXGm4s",
+    "created": 1433502667927,
+    "size": 33278,
+    "invoice": "102936A",
+    "object": "file_upload",
+    "type": "pdf",
+    "contractRef": null,
+    "void": false,
+    "values": {
+      "value": "1580.89",
+      "currency": "EUR",
+      "dateIssue": "2015-06-01",
+      "dateDue": "2015-06-21",
+      "counterparty": "FI21291126",
+      "destCountry": "FI"
+      }
+  }
+]
 ```
 
-This endpoint retrieves a specific kitten.
+This endpoint retrieves all collateral for the specific user.
 
 <aside class="warning">If you're not using an administrator API key, note that some kittens will return 403 Forbidden if they are hidden for admins only.</aside>
 
-### HTTP Request
+### API Request
 
-`GET http://example.com/kittens/<ID>`
+`GET https://sandbox.api.arex.io/collateral`
 
-### URL Parameters
+## Retrieve Invoice
 
-Parameter | Description
---------- | -----------
-ID | The ID of the cat to retrieve
+```shell
+curl https://sandbox.api.arex.io/collateral/col_15A3Gj2eZvKYlo2C0NxXGm4s \
+  -d "apiKey=ch72gsb320000udocl363eofy"
+```
 
+> The above request returns a JSON response:
+
+```json
+  {
+    "id": "col_15A3Gj2eZvKYlo2C0NxXGm4s",
+    "created": 1433502667927,
+    "size": 33278,
+    "invoice": "102936A",
+    "object": "file_upload",
+    "type": "pdf",
+    "contractRef": null,
+    "void": false,
+    "values": {
+      "value": "1580.89",
+      "currency": "EUR",
+      "dateIssue": "2015-06-01",
+      "dateDue": "2015-06-21",
+      "counterparty": "FI21291126",
+      "destCountry": "FI"
+      }
+  }
+```
+
+### API Request
+
+`GET https://sandbox.api.arex.io/collateral/{COLLATERAL_ID}`
+
+#ETRs
+
+#Orders

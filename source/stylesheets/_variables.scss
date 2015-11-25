@@ -26,24 +26,24 @@ under the License.
 $nav-bg: #393939;
 $examples-bg: #393939;
 $code-bg: #292929;
-$code-annotation-bg: #1c1c1c;
+$code-annotation-bg: #222222;
 $nav-subitem-bg: #262626;
-$nav-active-bg: #2467af;
+$nav-active-bg: #48a3c4;
 $lang-select-border: #000;
 $lang-select-bg: #222;
 $lang-select-active-bg: $examples-bg; // feel free to change this to blue or something
 $lang-select-pressed-bg: #111; // color of language tab bg when mouse is pressed
 $main-bg: #eaf2f6;
-$aside-notice-bg: #8fbcd4;
-$aside-warning-bg: #c97a7e;
-$aside-success-bg: #6ac174;
+$aside-notice-bg: #ffd772;
+$aside-warning-bg: #ecc6b7;
+$aside-success-bg: #d0e9c2;
 $search-notice-bg: #c97a7e;
 
 
 // TEXT COLORS
 ////////////////////
 $main-text: #333; // main content text color
-$nav-text: #fff;
+$nav-text: #bebebe;
 $nav-active-text: #fff;
 $lang-select-text: #fff; // color of unselected language tab text
 $lang-select-active-text: #fff; // color of selected language tab text
@@ -59,7 +59,7 @@ $main-padding: 28px; // padding to left and right of content & examples
 $nav-padding: 15px; // padding to left and right of navbar
 $nav-v-padding: 10px; // padding used vertically around search boxes and results
 $nav-indent: 10px; // extra padding for ToC subitems
-$code-annotation-padding: 13px; // padding inside code annotations
+$code-annotation-padding: 10px; // padding inside code annotations
 $h1-margin-bottom: 21px; // padding under the largest header tags
 $tablet-width: 930px; // min width before reverting to tablet size
 $phone-width: $tablet-width - $nav-width; // min width before reverting to mobile size
