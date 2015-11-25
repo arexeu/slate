@@ -147,7 +147,11 @@ To upload a file to AREX, you'll need to send a request of type `multipart/form-
 
 All of AREX's officially supported client libraries should have support for sending `multipart/form-data`.
 
+<<<<<<< HEAD
 ### API Request
+=======
+`GET http://example.com/api/kittens`
+>>>>>>> upstream/master
 
 `POST https://sandbox.api.arex.io/collateral`
 
@@ -205,8 +209,13 @@ This endpoint retrieves all collateral for the specific user.
 ## Retrieve Invoice
 
 ```shell
+<<<<<<< HEAD
 curl https://sandbox.api.arex.io/collateral/col_15A3Gj2eZvKYlo2C0NxXGm4s \
   -d "apiKey=ch72gsb320000udocl363eofy"
+=======
+curl "http://example.com/api/kittens/2"
+  -H "Authorization: meowmeowmeow"
+>>>>>>> upstream/master
 ```
 
 > The above request returns a JSON response:
@@ -236,6 +245,12 @@ curl https://sandbox.api.arex.io/collateral/col_15A3Gj2eZvKYlo2C0NxXGm4s \
 
 `GET https://sandbox.api.arex.io/collateral/{COLLATERAL_ID}`
 
+<<<<<<< HEAD
 #ETRs
+=======
+Parameter | Description
+--------- | -----------
+ID | The ID of the kitten to retrieve
+>>>>>>> upstream/master
 
 #Orders
